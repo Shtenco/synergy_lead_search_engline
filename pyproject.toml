@@ -1,20 +1,18 @@
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
-
 [project]
 name = "synergy-real-estate-lead-os"
-version = "0.8.0"
-description = "Evidence-first real estate and residency lead intelligence"
+version = "0.8.1"
 requires-python = ">=3.10"
 dependencies = ["fastapi>=0.110", "uvicorn>=0.27", "pydantic>=2"]
-
 [project.optional-dependencies]
-test = ["pytest>=8", "httpx>=0.27"]
-
+test = ["pytest>=8", "httpx>=0.27", "pytest-asyncio>=0.23"]
+native = ["numpy>=1.26", "scikit-learn>=1.4", "catboost>=1.2.7", "vk_api>=11.9.9"]
+telegram = ["telethon>=1.36"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["lead_os*"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
