@@ -90,6 +90,23 @@ def prepare(document_id: int, p: CRMIn, operator: str = Depends(auth)):
     except KeyError: raise HTTPException(404, "document not found")
     except ValueError as exc: raise HTTPException(422, str(exc)) from exc
 
+@app.post("/v1/outbox/{item_id}/dispatch")
+def dispatch(item_id: int, operator: str = Depends(auth)):
+    """Explicit provider write after prior human approval; never auto-dispatch.
+    Response must be acknowledged by actual Bitrix24 API before EXECUTED state.
+    """
+    from .crm import dispatch_bitrix24
+    try:
+        return dispatch_bitrix24(store(), item_id)
+    except KeyError:
+        raise HTTPException(404, "outbox item not found")
+    except PermissionError:
+        raise HTTPException(403, "operator approval required")
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except RuntimeError:
+        raise HTTPException(503, "configured CRM provider did not acknowledge execution")
+
 @app.post("/v1/outbox/{item_id}/approve")
 def approve(item_id: int, operator: str = Depends(auth)):
     try: return store().approve_outbox(item_id,operator)
