@@ -1,3 +1,10 @@
+<!-- SCIENTIFIC-V5-2026:START -->
+<img src="assets/readme/scientific-architecture-v5.svg" width="100%" alt="Real Estate Lead OS research architecture"/>
+
+**[Научное досье V5](docs/SCIENTIFIC_DOSSIER_V5_2026.md)** — source inventory, acceptance gates, ограничения и проверки. **Статус:** OFFLINE CANDIDATE. Исторический текст README сохранён ниже.
+
+<!-- SCIENTIFIC-V5-2026:END -->
+
 # SYNERGY REAL ESTATE LEAD OS — V8
 
 **State: technical foundation / offline candidate — NOT a deployed lead discovery service.**
