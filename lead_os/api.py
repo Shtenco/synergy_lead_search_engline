@@ -48,6 +48,26 @@ def ingest(p: DocumentIn, operator: str = Depends(auth)):
     try: return store().ingest(p.model_dump())
     except ValueError as exc: raise HTTPException(422, str(exc)) from exc
 
+@app.get("/v1/documents/{document_id}")
+def document_detail(document_id: int, operator: str = Depends(auth)):
+    doc = store().get(document_id)
+    if doc is None:
+        raise HTTPException(404, "document not found")
+    return {key: doc[key] for key in (
+        "id", "source", "source_url", "domain", "text", "score", "bucket",
+        "reviewer_label", "lawful_basis", "contact_opt_in"
+    )}
+
+@app.get("/v1/outbox/{item_id}")
+def outbox_detail(item_id: int, operator: str = Depends(auth)):
+    item = store().outbox(item_id)
+    if item is None:
+        raise HTTPException(404, "outbox item not found")
+    return {key:item[key] for key in (
+        "id","document_id","provider","state","approved_by","approved_at",
+        "executed_at","response_json"
+    )}
+
 @app.get("/v1/search")
 def search(q: str = "", domain: str | None = None, min_score: int = 0,
            limit: int = 30, operator: str = Depends(auth)):
