@@ -48,6 +48,26 @@ def ingest(p: DocumentIn, operator: str = Depends(auth)):
     try: return store().ingest(p.model_dump())
     except ValueError as exc: raise HTTPException(422, str(exc)) from exc
 
+@app.get("/v1/documents/{document_id}")
+def document_detail(document_id: int, operator: str = Depends(auth)):
+    doc = store().get(document_id)
+    if doc is None:
+        raise HTTPException(404, "document not found")
+    return {key: doc[key] for key in (
+        "id", "source", "source_url", "domain", "text", "score", "bucket",
+        "reviewer_label", "lawful_basis", "contact_opt_in"
+    )}
+
+@app.get("/v1/outbox/{item_id}")
+def outbox_detail(item_id: int, operator: str = Depends(auth)):
+    item = store().outbox(item_id)
+    if item is None:
+        raise HTTPException(404, "outbox item not found")
+    return {key:item[key] for key in (
+        "id","document_id","provider","state","approved_by","approved_at",
+        "executed_at","response_json"
+    )}
+
 @app.get("/v1/search")
 def search(q: str = "", domain: str | None = None, min_score: int = 0,
            limit: int = 30, operator: str = Depends(auth)):
@@ -69,6 +89,23 @@ def prepare(document_id: int, p: CRMIn, operator: str = Depends(auth)):
     try: return store().prepare_crm(document_id,p.provider,p.title)
     except KeyError: raise HTTPException(404, "document not found")
     except ValueError as exc: raise HTTPException(422, str(exc)) from exc
+
+@app.post("/v1/outbox/{item_id}/dispatch")
+def dispatch(item_id: int, operator: str = Depends(auth)):
+    """Explicit provider write after prior human approval; never auto-dispatch.
+    Response must be acknowledged by actual Bitrix24 API before EXECUTED state.
+    """
+    from .crm import dispatch_bitrix24
+    try:
+        return dispatch_bitrix24(store(), item_id)
+    except KeyError:
+        raise HTTPException(404, "outbox item not found")
+    except PermissionError:
+        raise HTTPException(403, "operator approval required")
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except RuntimeError:
+        raise HTTPException(503, "configured CRM provider did not acknowledge execution")
 
 @app.post("/v1/outbox/{item_id}/approve")
 def approve(item_id: int, operator: str = Depends(auth)):
